@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+langgraph
+langchain-groq
+langchain-core
+python-dotenv
+requests
+tavily-python
+sqlalchemy
+bcrypt
+python-jose[cryptography]
+pydantic

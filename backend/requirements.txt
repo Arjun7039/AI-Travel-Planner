@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pydantic
+langgraph
+langchain-groq
+langsmith
+python-dotenv
+chromadb
+sentence-transformers
+requests
+passlib[bcrypt]
+python-jose[cryptography]
