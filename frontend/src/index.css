@@ -110,3 +110,51 @@ a {
   color: var(--accent);
   text-decoration: none;
 }
+
+/* Responsive Layout for Conversation View */
+.conversation-layout {
+  display: flex;
+  gap: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: flex-start;
+  padding: 0 20px;
+}
+
+.chat-container {
+  flex: 1 1 60%;
+  margin: 0;
+}
+
+.map-container {
+  flex: 1 1 40%;
+  position: sticky;
+  top: 80px;
+  height: calc(100vh - 120px);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  background: var(--bg-elevated);
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 900px) {
+  .conversation-layout {
+    flex-direction: column;
+  }
+  .chat-container {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .map-container {
+    flex: 1 1 100%;
+    width: 100%;
+    position: relative;
+    top: 0;
+    height: 50vh;
+    margin-bottom: 40px;
+  }
+}
+

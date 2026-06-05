@@ -95,9 +95,9 @@ export function ConversationView({ userPrompt, result, onBack, onNewTrip }: Conv
   }
 
   return (
-    <div style={{ display: 'flex', gap: 32, maxWidth: 1400, margin: '0 auto', alignItems: 'flex-start', padding: '0 20px' }}>
+    <div className="conversation-layout">
       {/* Left Column: Chat & Itinerary */}
-      <div className="chat-container" style={{ flex: '1 1 60%', margin: 0 }}>
+      <div className="chat-container">
         {/* Top bar */}
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -210,19 +210,7 @@ export function ConversationView({ userPrompt, result, onBack, onNewTrip }: Conv
       </div>
 
       {/* Right Column: Map */}
-      <div className="animate-fade-in-up" style={{
-        flex: '1 1 40%',
-        position: 'sticky',
-        top: 80,
-        height: 'calc(100vh - 120px)',
-        borderRadius: 'var(--radius-xl)',
-        overflow: 'hidden',
-        border: '1px solid var(--border)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-        background: 'var(--bg-elevated)',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
+      <div className="animate-fade-in-up map-container">
         <div style={{ padding: '12px 16px', background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>📍 Itinerary Map</span>
           <a 
