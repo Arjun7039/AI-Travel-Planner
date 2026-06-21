@@ -5,33 +5,22 @@ itinerary with rich formatting, emojis, and practical details.
 The output is human-readable markdown, NOT JSON.
 """
 
-import os
-from dotenv import load_dotenv
-from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
 from backend.core.state import TravelState
-
-load_dotenv()
+from backend.core.llm_provider import get_llm, get_text_content
 
 
 def planner_agent(state: TravelState) -> dict:
     """Generate a conversational, markdown-formatted travel itinerary."""
     print("✈️ Planner Agent: Crafting your itinerary...")
 
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
+    llm = get_llm(temperature=0.5, max_tokens=4000)
+    if not llm:
         return {
-            "itinerary_markdown": "❌ Cannot generate itinerary: Missing GROQ_API_KEY.",
+            "itinerary_markdown": "❌ Cannot generate itinerary: No LLM API key configured.",
             "trip_title": "Error",
             "agent_logs": state.get("agent_logs", []) + ["Planner Agent: No API key."],
         }
-
-    llm = ChatGroq(
-        model="llama-3.3-70b-versatile",
-        api_key=api_key,
-        temperature=0.5,
-        max_tokens=4000,
-    )
 
     # Gather all context
     destination = state.get("destination", "Unknown")
@@ -88,7 +77,8 @@ STRICT RULES FOR INDIAN PRICING AND BUDGET:
 3. Stay STRICTLY within ₹{budget:,} total budget for {travellers} traveller(s). If you must, suggest fewer paid activities and more free ones (temples, beaches, walks).
 4. Use REAL place names from the research data provided.
 5. Transport mode is "{transport}" — ONLY mention this mode.
-6. AT THE VERY END OF YOUR RESPONSE, you MUST output a valid JSON block containing the specific places visited AND the estimated total costs for the trip. Provide rough latitude/longitude coordinates for each place. Use this EXACT format, wrapped in ```json ... ```:
+6. DO NOT wrap your main text in JSON. The main itinerary MUST be plain markdown. 
+7. AT THE VERY END OF YOUR RESPONSE, you MUST output a valid JSON block containing the specific places visited AND the estimated total costs for the trip. Provide rough latitude/longitude coordinates for each place. Use this EXACT format, wrapped in ```json ... ```:
 ```json
 {{
   "waypoints": [{{"name": "Baga Beach", "lat": 15.5553, "lng": 73.7517}}],
@@ -123,14 +113,14 @@ Please write the itinerary now. Make it feel like a conversation — friendly, d
             HumanMessage(content=user_message),
         ])
 
-        itinerary = response.content if isinstance(response.content, str) else str(response.content)
+        itinerary = get_text_content(response)
 
         # Generate a catchy trip title
         title_response = llm.invoke([
             SystemMessage(content="Generate a short, catchy trip title (max 6 words). Just the title, nothing else. Example: 'Goa Beach Getaway' or 'Royal Rajasthan Adventure'"),
             HumanMessage(content=f"Trip to {destination} for {num_days} days, interests: {', '.join(interests)}"),
         ])
-        trip_title = title_response.content.strip().strip('"').strip("'")
+        trip_title = get_text_content(title_response).strip().strip('"').strip("'")
         if len(trip_title) > 60:
             trip_title = f"{destination} Adventure"
 

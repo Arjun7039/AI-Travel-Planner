@@ -9,14 +9,10 @@ And this agent:
 3. Returns both the structured data AND an enhanced description
 """
 
-import os
 import json
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
-from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
-
-load_dotenv()
+from backend.core.llm_provider import get_llm, get_text_content
 
 
 def enhance_prompt(user_text: str) -> dict:
@@ -36,16 +32,9 @@ def enhance_prompt(user_text: str) -> dict:
             "trip_title": "Goa Beach Getaway"
         }
     """
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
+    llm = get_llm(temperature=0.3, max_tokens=800)
+    if not llm:
         return _fallback_parse(user_text)
-
-    llm = ChatGroq(
-        model="llama-3.3-70b-versatile",
-        api_key=api_key,
-        temperature=0.3,
-        max_tokens=800,
-    )
 
     today = datetime.now().strftime("%Y-%m-%d")
     tomorrow = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
@@ -85,7 +74,7 @@ RULES:
             HumanMessage(content=f"Parse this travel request: {user_text}"),
         ])
 
-        raw = response.content if isinstance(response.content, str) else str(response.content)
+        raw = get_text_content(response)
 
         # Extract JSON from response
         raw = raw.strip()

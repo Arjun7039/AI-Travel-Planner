@@ -5,6 +5,7 @@ psycopg2-binary
 pydantic
 langgraph
 langchain-groq
+langchain-google-genai
 langsmith
 python-dotenv
 chromadb

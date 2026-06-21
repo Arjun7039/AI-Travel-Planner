@@ -1,14 +1,11 @@
 import os
 import json
 import re
-from dotenv import load_dotenv
-from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
 from langsmith import traceable
 from backend.core.state import TravelState
 from backend.rag.retriever import retrieve_context
-
-load_dotenv()
+from backend.core.llm_provider import get_llm, get_text_content
 
 
 def extract_json_from_text(text: str):
@@ -60,17 +57,11 @@ def trip_planner_agent(state: TravelState) -> TravelState:
     if "agent_messages" not in state:
         state["agent_messages"] = []
 
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        state["agent_messages"].append("Trip Planner Agent skipped: No GROQ_API_KEY.")
-        state["error"] = "Missing GROQ_API_KEY"
+    llm = get_llm(temperature=0.4, max_tokens=4000)
+    if not llm:
+        state["agent_messages"].append("Trip Planner Agent skipped: No LLM API key.")
+        state["error"] = "Missing LLM API key"
         return state
-
-    llm = ChatGroq(
-        model="llama-3.3-70b-versatile",
-        api_key=api_key,
-        temperature=0.4,
-    )
 
     # Gather context from state
     weather_data = state.get("weather_forecast", [])
@@ -211,7 +202,7 @@ IMPORTANT:
             HumanMessage(content=user_prompt)
         ])
         
-        raw_text = response.content if isinstance(response.content, str) else str(response.content)
+        raw_text = get_text_content(response)
         
         # Parse the JSON from the response
         parsed = extract_json_from_text(raw_text)

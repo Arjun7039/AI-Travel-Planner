@@ -13,6 +13,7 @@ interface ConversationViewProps {
     total_cost: number;
     within_budget: boolean;
     destination: string;
+    origin?: string;
     transport_mode: string;
   };
   onBack: () => void;
@@ -80,8 +81,8 @@ export function ConversationView({ userPrompt, result, onBack, onNewTrip }: Conv
   let waypoints: any[] = [];
   let displayMarkdown = result.itinerary_markdown || '';
 
-  // Extract JSON waypoints
-  const jsonMatch = displayMarkdown.match(/```json\s*([\s\S]*?)\s*```/);
+  // Extract JSON waypoints (handle Markdown fenced and unfenced JSON)
+  const jsonMatch = displayMarkdown.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (jsonMatch) {
     try {
       const parsed = JSON.parse(jsonMatch[1]);
@@ -91,7 +92,21 @@ export function ConversationView({ userPrompt, result, onBack, onNewTrip }: Conv
     } catch (e) {
       console.error("Failed to parse waypoints JSON", e);
     }
-    displayMarkdown = displayMarkdown.replace(/```json\s*[\s\S]*?\s*```/, '').trim();
+    displayMarkdown = displayMarkdown.replace(/```(?:json)?\s*[\s\S]*?\s*```/, '').trim();
+  } else {
+    // Fallback: try to find a raw JSON object at the end
+    const rawJsonMatch = displayMarkdown.match(/(\{[\s\S]*"waypoints"[\s\S]*\})/);
+    if (rawJsonMatch) {
+      try {
+        const parsed = JSON.parse(rawJsonMatch[1]);
+        if (parsed.waypoints && Array.isArray(parsed.waypoints)) {
+          waypoints = parsed.waypoints;
+        }
+        displayMarkdown = displayMarkdown.replace(rawJsonMatch[1], '').trim();
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
   return (
@@ -108,8 +123,10 @@ export function ConversationView({ userPrompt, result, onBack, onNewTrip }: Conv
               {result.trip_title || 'Your Trip'}
             </h2>
             <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>📍 {result.destination}</span>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', background: 'rgba(212, 255, 0, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>
+                📍 {result.origin ? `${result.origin} → ${result.destination}` : result.destination}
+              </span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.05)', padding: '4px 8px', borderRadius: '4px' }}>
                 {result.transport_mode === 'Flight' ? '✈️' : result.transport_mode === 'Train' ? '🚆' : '🚗'} {result.transport_mode}
               </span>
               {result.within_budget
@@ -235,6 +252,7 @@ export function ConversationView({ userPrompt, result, onBack, onNewTrip }: Conv
                 <style>
                   body, html, #map { height: 100%; margin: 0; padding: 0; background: #e5e3df; }
                   .custom-marker { background: #ea4335; color: #fff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: Roboto, Arial, sans-serif; font-size: 12px; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+                  .origin-dest-marker { background: #1a73e8; color: #fff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: Roboto, Arial, sans-serif; font-size: 12px; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
                   .leaflet-popup-content-wrapper { background: #fff; color: #3c4043; border-radius: 8px; font-family: Roboto, Arial, sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
                   .leaflet-popup-tip { background: #fff; }
                 </style>
@@ -245,7 +263,6 @@ export function ConversationView({ userPrompt, result, onBack, onNewTrip }: Conv
                   var map = L.map('map', { zoomControl: false });
                   L.control.zoom({ position: 'bottomright' }).addTo(map);
                   
-                  // Native Google Maps Tiles
                   L.tileLayer('http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}', {
                       attribution: '&copy; Google',
                       maxZoom: 20
@@ -253,30 +270,62 @@ export function ConversationView({ userPrompt, result, onBack, onNewTrip }: Conv
 
                   var waypoints = ${JSON.stringify(waypoints)};
                   var cityName = ${JSON.stringify(result.destination)};
+                  var originName = ${JSON.stringify(result.origin || '')};
                   var bounds = L.latLngBounds();
+                  var latlngs = [];
                   
+                  // Plot provided waypoints
                   waypoints.forEach((wp, idx) => {
                     if(wp.lat && wp.lng) {
-                      var icon = L.divIcon({
-                        className: 'custom-marker',
-                        html: (idx + 1),
-                        iconSize: [24, 24],
-                        iconAnchor: [12, 12]
-                      });
+                      latlngs.push([wp.lat, wp.lng]);
+                      var icon = L.divIcon({ className: 'custom-marker', html: (idx + 1), iconSize: [24, 24], iconAnchor: [12, 12] });
                       var marker = L.marker([wp.lat, wp.lng], {icon: icon}).addTo(map);
-                      
-                      var dirUrl = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(wp.name + ", " + cityName);
-                      var popupHtml = "<div style='text-align:center; padding: 4px;'><b>" + wp.name + "</b><br><a href='" + dirUrl + "' target='_blank' style='display:inline-block; margin-top:8px; background:#1a73e8; color:#fff; padding:6px 12px; border-radius:4px; text-decoration:none; font-weight:500; font-size:13px;'>Directions ↗</a></div>";
-                      
+                      var popupHtml = "<div style='text-align:center; padding: 4px;'><b>" + wp.name + "</b></div>";
                       marker.bindPopup(popupHtml);
                       bounds.extend([wp.lat, wp.lng]);
                     }
                   });
 
-                  if (waypoints.length > 0 && bounds.isValid()) {
-                    map.fitBounds(bounds, { padding: [50, 50] });
+                  // If we don't have enough points for a route, try to geocode origin and destination
+                  if (latlngs.length < 2 && cityName && originName) {
+                    Promise.all([
+                      fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(originName)).then(r => r.json()),
+                      fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(cityName)).then(r => r.json())
+                    ]).then(results => {
+                      var o = results[0][0];
+                      var d = results[1][0];
+                      
+                      if (o && d) {
+                        var oLat = parseFloat(o.lat), oLng = parseFloat(o.lon);
+                        var dLat = parseFloat(d.lat), dLng = parseFloat(d.lon);
+                        
+                        var oIcon = L.divIcon({ className: 'origin-dest-marker', html: 'A', iconSize: [24, 24], iconAnchor: [12, 12] });
+                        var dIcon = L.divIcon({ className: 'origin-dest-marker', html: 'B', iconSize: [24, 24], iconAnchor: [12, 12] });
+                        
+                        L.marker([oLat, oLng], {icon: oIcon}).bindPopup("<b>" + originName + "</b>").addTo(map);
+                        L.marker([dLat, dLng], {icon: dIcon}).bindPopup("<b>" + cityName + "</b>").addTo(map);
+                        
+                        L.polyline([[oLat, oLng], [dLat, dLng]], { color: '#1a73e8', weight: 4, dashArray: '5, 10', opacity: 0.8 }).addTo(map);
+                        
+                        var newBounds = L.latLngBounds([[oLat, oLng], [dLat, dLng]]);
+                        map.fitBounds(newBounds, { padding: [50, 50] });
+                      } else {
+                        // Fallback view
+                        map.setView([20.5937, 78.9629], 5);
+                      }
+                    }).catch(e => {
+                      console.error("Geocoding failed", e);
+                      map.setView([20.5937, 78.9629], 5);
+                    });
+                  } else if (latlngs.length > 1) {
+                    L.polyline(latlngs, { color: '#1a73e8', weight: 4, dashArray: '5, 10', opacity: 0.8 }).addTo(map);
+                    if (bounds.isValid()) map.fitBounds(bounds, { padding: [50, 50] });
+                  } else if (latlngs.length === 1) {
+                     if (bounds.isValid()) {
+                         map.setView(latlngs[0], 12);
+                     }
                   } else {
-                    map.setView([20.5937, 78.9629], 5);
+                     map.setView([20.5937, 78.9629], 5);
                   }
                 </script>
               </body>

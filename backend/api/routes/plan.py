@@ -110,6 +110,7 @@ async def plan_trip_stream(
                 "budget_breakdown": final_state.get("budget_breakdown", {}),
                 "total_cost": final_state.get("total_cost", 0),
                 "within_budget": final_state.get("within_budget", True),
+                "origin": request.origin,
                 "destination": request.destination,
                 "transport_mode": request.transport_mode,
             }
