@@ -364,7 +364,7 @@ export default function LandingPage() {
                   </div>
 
                   {/* Action buttons */}
-                  <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     <button
                       onClick={() => setStage('home')}
                       style={{

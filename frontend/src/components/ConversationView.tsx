@@ -122,7 +122,7 @@ export function ConversationView({ userPrompt, result, onBack, onNewTrip }: Conv
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700 }}>
               {result.trip_title || 'Your Trip'}
             </h2>
-            <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+            <div style={{ display: 'flex', gap: 12, marginTop: 4, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', background: 'rgba(212, 255, 0, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>
                 📍 {result.origin ? `${result.origin} → ${result.destination}` : result.destination}
               </span>
@@ -178,7 +178,7 @@ export function ConversationView({ userPrompt, result, onBack, onNewTrip }: Conv
 
         {/* Budget Breakdown Card */}
         {Object.keys(breakdown).length > 0 && (
-          <div className="budget-card animate-fade-in" style={{ marginTop: 8, marginLeft: 44 }}>
+          <div className="budget-card animate-fade-in indented-content" style={{ marginTop: 8, marginLeft: 44 }}>
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, marginBottom: 16 }}>
               💰 Budget Breakdown
             </h3>
@@ -212,7 +212,7 @@ export function ConversationView({ userPrompt, result, onBack, onNewTrip }: Conv
         )}
 
         {/* Bottom action */}
-        <div style={{ textAlign: 'center', padding: '20px 0 40px', marginLeft: 44 }}>
+        <div className="indented-content" style={{ textAlign: 'center', padding: '20px 0 40px', marginLeft: 44 }}>
           <button
             onClick={onNewTrip}
             style={{

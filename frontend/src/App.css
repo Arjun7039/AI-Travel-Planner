@@ -419,4 +419,7 @@
   .chat-container { padding: 0 4px; }
   .itinerary-md h2 { font-size: 16px; }
   .itinerary-md { font-size: 13px; }
+  
+  .indented-content { margin-left: 0 !important; }
 }
+
