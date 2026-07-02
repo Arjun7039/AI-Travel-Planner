@@ -21,19 +21,19 @@ def get_llm(temperature: float = 0.3, max_tokens: int = 4000):
     primary_llm = None
     fallback_llm = None
 
-    # ── Primary: Gemini 1.5 Flash ──
+    # ── Primary: Gemini 3.5 Flash ──
     if google_key:
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
             primary_llm = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash",
+                model="gemini-3.5-flash",
                 google_api_key=google_key,
                 temperature=temperature,
                 max_output_tokens=max_tokens,
                 max_retries=0,
             )
         except Exception as e:
-            print(f"[LLM] Gemini 1.5 Flash init failed ({e})")
+            print(f"[LLM] Gemini 3.5 Flash init failed ({e})")
 
     # ── Fallback: Groq API ──
     if groq_key:
