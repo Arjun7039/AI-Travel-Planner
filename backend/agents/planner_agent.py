@@ -35,6 +35,7 @@ def planner_agent(state: TravelState) -> dict:
     weather = state.get("weather_data", "No weather data")
     places = state.get("places_data", "No places data")
     hotels = state.get("hotels_data", "No hotel data")
+    flights = state.get("flights_data", "No flight data")
     replan_count = state.get("replan_count", 0)
 
     # Calculate days
@@ -93,7 +94,10 @@ RESEARCH DATA (use these real places and hotels):
 {places}
 
 HOTELS:
-{hotels}"""
+{hotels}
+
+FLIGHTS / TRANSPORT:
+{flights}"""
 
     user_message = f"""Create a {num_days}-day itinerary:
 

@@ -98,12 +98,22 @@ def _fetch_hotels(destination: str, budget_per_night: float) -> str:
         max_results=4,
     )
 
+def _fetch_flights(origin: str, destination: str) -> str:
+    """Search for average flight prices."""
+    if not origin:
+        return "Flight search skipped (no origin)."
+    return _search_tavily(
+        f"average flight price from {origin} to {destination} return economy INR",
+        max_results=3,
+    )
+
 
 def research_agent(state: TravelState) -> dict:
     """Fetch weather, places, and hotels in parallel (~2s total)."""
     print("🔍 Research Agent: Gathering data...")
 
     destination = state.get("destination", "Unknown")
+    origin = state.get("origin", "")
     budget = state.get("budget_inr", 50000)
     start_date = state.get("start_date", "")
     end_date = state.get("end_date", "")
@@ -121,15 +131,17 @@ def research_agent(state: TravelState) -> dict:
 
     hotel_budget_per_night = (budget * 0.30) / max(num_days, 1)
 
-    # Run all 3 searches in parallel
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+    # Run all 4 searches in parallel
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         weather_future = executor.submit(_fetch_weather, destination)
         places_future = executor.submit(_fetch_places, destination)
         hotels_future = executor.submit(_fetch_hotels, destination, hotel_budget_per_night)
+        flights_future = executor.submit(_fetch_flights, origin, destination)
 
         weather_data = weather_future.result(timeout=15)
         places_data = places_future.result(timeout=15)
         hotels_data = hotels_future.result(timeout=15)
+        flights_data = flights_future.result(timeout=15)
 
     logs = state.get("agent_logs", [])
     logs.append(f"Research Agent: Gathered weather, places, and hotels for {destination}.")
@@ -138,5 +150,6 @@ def research_agent(state: TravelState) -> dict:
         "weather_data": weather_data,
         "places_data": places_data,
         "hotels_data": hotels_data,
+        "flights_data": flights_data,
         "agent_logs": logs,
     }

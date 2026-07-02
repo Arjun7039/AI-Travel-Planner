@@ -19,14 +19,14 @@
 User Input (Natural Language)
         │
         ▼
-  [Prompt Enhancer]  ← Groq LLM extracts & enhances
+  [Prompt Enhancer]  ← Gemini 3.5 Flash (fallback Groq)
         │
         ▼
   ┌─────────────────────┐
   │  LangGraph Pipeline  │
   │                       │
   │  1. Research Agent    │ ← Tavily + OpenWeatherMap (parallel)
-  │  2. Planner Agent     │ ← Groq llama-3.3-70b (markdown output)
+  │  2. Planner Agent     │ ← Gemini 3.5 Flash (fallback Groq)
   │  3. Budget Agent      │ ← Pure logic validation
   │                       │
   │  [Replan loop ×2]     │
@@ -40,7 +40,7 @@ User Input (Natural Language)
 
 | Layer | Technology |
 |-------|-----------|
-| **LLM** | Groq API (llama-3.3-70b-versatile) |
+| **LLM** | Gemini 3.5 Flash (Primary) / Groq API (Fallback) |
 | **Agent Orchestration** | LangGraph |
 | **Backend** | FastAPI (Python) |
 | **Frontend** | React 19 + TypeScript + Vite |
@@ -62,7 +62,7 @@ pip install -r requirements.txt
 ### 2. Configure Environment
 ```bash
 cp .env.example .env
-# Add your API keys: GROQ_API_KEY, TAVILY_API_KEY, OPENWEATHER_API_KEY
+# Add your API keys: GOOGLE_API_KEY, GROQ_API_KEY, TAVILY_API_KEY, OPENWEATHER_API_KEY
 ```
 
 ### 3. Start Backend
@@ -109,7 +109,7 @@ ai-travel-planner/
 │       │   ├── ConversationView.tsx  # ChatGPT-style itinerary
 │       │   ├── PlanningProgress.tsx  # Agent progress display
 │       │   ├── Navbar.tsx
-+       │   └── Footer.tsx
+│       │   └── Footer.tsx
 │       ├── pages/
 │       │   ├── LandingPage.tsx      # Main page (all stages)
 │       │   ├── LoginPage.tsx

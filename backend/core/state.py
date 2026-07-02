@@ -19,6 +19,7 @@ class TravelState(TypedDict):
     weather_data: Optional[str]
     places_data: Optional[str]
     hotels_data: Optional[str]
+    flights_data: Optional[str]
 
     # Planner Agent outputs
     itinerary_markdown: Optional[str]   # Rich markdown itinerary (ChatGPT-style)
